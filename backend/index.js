@@ -4,7 +4,15 @@ const admin = require('firebase-admin');
 require('dotenv').config();
 
 // Firebase Admin SDK の初期化
-const serviceAccount = require('./serviceAccountKey.json');
+let serviceAccount;
+if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  // Railway環境（本番）
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} else {
+  // ローカル環境（開発）
+  serviceAccount = require('./serviceAccountKey.json');
+}
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
