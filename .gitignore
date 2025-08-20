@@ -40,3 +40,4 @@ coverage/
 # Production
 build/
 .serena/
+.serena/
