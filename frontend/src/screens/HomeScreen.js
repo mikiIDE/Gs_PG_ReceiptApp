@@ -66,6 +66,12 @@ export default function HomeScreen({ navigation }) {
       >
         <Text style={styles.addButtonText}>+</Text>
       </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.ocrButton}
+        onPress={() => navigation.navigate("OCR")}
+      >
+        <Text style={styles.ocrButtonText}>📷</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -126,6 +132,26 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: 30,
+    color: "white",
+  },
+  ocrButton: {
+    position: "absolute",
+    right: 20,
+    bottom: 90,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#4CAF50",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  ocrButtonText: {
+    fontSize: 24,
     color: "white",
   },
 });

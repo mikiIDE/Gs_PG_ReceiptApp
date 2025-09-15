@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from './src/screens/HomeScreen';
 import AddReceiptScreen from './src/screens/AddReceiptScreen';
+import OCRScreen from './src/screens/OCRScreen';
 
 const Stack = createStackNavigator();
 
@@ -19,6 +20,11 @@ export default function App() {
           name="AddReceipt" 
           component={AddReceiptScreen} 
           options={{ title: 'レシート追加' }}
+        />
+        <Stack.Screen 
+          name="OCR" 
+          component={OCRScreen} 
+          options={{ title: 'レシート撮影' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
