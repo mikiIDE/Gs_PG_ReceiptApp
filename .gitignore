@@ -41,3 +41,5 @@ coverage/
 build/
 .serena/
 .serena/
+*.apk
+build-*.apk
