@@ -27,7 +27,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ide.receipt_app"
+      "package": "com.ide.receipt_app",
+      "versionCode": 1,
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -41,7 +44,9 @@
             "deploymentTarget": "16.0"
           },
           "android": {
-            "minSdkVersion": 21
+            "minSdkVersion": 24,
+            "targetSdkVersion": 34,
+            "compileSdkVersion": 34
           }
         }
       ]
