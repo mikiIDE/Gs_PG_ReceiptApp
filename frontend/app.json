@@ -13,7 +13,13 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ide.receipt-app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "このアプリはレシートを撮影してテキストを読み取るためにカメラを使用します。",
+        "NSPhotoLibraryUsageDescription": "このアプリは撮影したレシートを保存するためにフォトライブラリにアクセスします。"
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -27,7 +33,18 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0"
+          },
+          "android": {
+            "minSdkVersion": 21
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
