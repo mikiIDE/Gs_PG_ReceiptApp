@@ -1,16 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
-  ScrollView,
   ActivityIndicator,
-} from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as MediaLibrary from 'expo-media-library';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
+  ScrollView,
+} from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import * as MediaLibrary from "expo-media-library";
+import TextRecognition, { TextRecognitionScript } from "@react-native-ml-kit/text-recognition";
 
 export default function OCRScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -42,9 +42,10 @@ export default function OCRScreen({ navigation }) {
     try {
       setIsProcessing(true);
       
-      // 写真撮影
+      // 写真撮影（高品質設定）
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 1.0,           // 最高品質に変更
+        skipProcessing: true,   // 余計な画像処理をスキップ
         base64: false,
       });
 
@@ -53,8 +54,12 @@ export default function OCRScreen({ navigation }) {
         await MediaLibrary.saveToLibraryAsync(photo.uri);
       }
 
-      // ML Kit でテキスト認識
-      const result = await TextRecognition.recognize(photo.uri);
+      // ML Kit でテキスト認識（日本語スクリプト明示）
+      const result = await TextRecognition.recognize(
+        photo.uri, 
+        TextRecognitionScript.JAPANESE
+      );
+      console.log('Japanese Script OCR Result:', result);
       setRecognizedText(result.text);
 
       Alert.alert(
@@ -91,39 +96,49 @@ export default function OCRScreen({ navigation }) {
         ref={cameraRef}
         style={styles.camera}
         facing="back"
-      >
-        <View style={styles.overlay}>
-          <Text style={styles.instruction}>
-            レシートをカメラに映してください
-          </Text>
-          
-          <TouchableOpacity
-            style={[styles.captureButton, isProcessing && styles.disabledButton]}
-            onPress={takePictureAndRecognize}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.captureButtonText}>撮影</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </CameraView>
+      />
+      
+      {/* カメラの上にオーバーレイを配置 */}
+      <View style={styles.overlay}>
+        <Text style={styles.instruction}>
+          レシートをカメラに映してください
+        </Text>
+        
+        <TouchableOpacity
+          style={[styles.captureButton, isProcessing && styles.disabledButton]}
+          onPress={takePictureAndRecognize}
+          disabled={isProcessing}
+        >
+          {isProcessing ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.captureButtonText}>撮影</Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
+      {/* 認識結果表示エリア */}
       {recognizedText ? (
-        <ScrollView style={styles.resultContainer}>
-          <Text style={styles.resultTitle}>認識結果:</Text>
-          <Text style={styles.resultText}>{recognizedText}</Text>
+        <View style={styles.resultContainer}>
+          <View style={styles.resultHeader}>
+            <Text style={styles.resultTitle}>認識結果:</Text>
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setRecognizedText('')}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.resultScrollView}>
+            <Text style={styles.resultText}>{recognizedText}</Text>
+          </ScrollView>
           <TouchableOpacity
             style={styles.processButton}
             onPress={() => processRecognizedText(recognizedText)}
           >
-            <Text style={styles.processButtonText}>
-              レシート追加画面へ進む
-            </Text>
+            <Text style={styles.processButtonText}>レシート追加画面へ進む</Text>
           </TouchableOpacity>
-        </ScrollView>
+        </View>
       ) : null}
     </View>
   );
@@ -132,23 +147,27 @@ export default function OCRScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
+    backgroundColor: "black",
   },
   camera: {
     flex: 1,
   },
   overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 50,
   },
   instruction: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    textAlign: "center",
+    backgroundColor: "rgba(0,0,0,0.7)",
     padding: 15,
     borderRadius: 10,
   },
@@ -156,64 +175,87 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#2196F3',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#2196F3",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 4,
-    borderColor: 'white',
+    borderColor: "white",
   },
   disabledButton: {
-    backgroundColor: '#666',
+    backgroundColor: "#666",
   },
   captureButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   message: {
-    textAlign: 'center',
+    textAlign: "center",
     paddingBottom: 10,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
     padding: 15,
     borderRadius: 5,
     margin: 20,
   },
   buttonText: {
-    color: 'white',
-    textAlign: 'center',
+    color: "white",
+    textAlign: "center",
     fontSize: 16,
   },
   resultContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'white',
-    maxHeight: 300,
+    backgroundColor: "white",
+    maxHeight: 400,
     padding: 15,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   resultTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#666",
+  },
+  resultScrollView: {
+    maxHeight: 200,
+    marginBottom: 15,
   },
   resultText: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 15,
   },
   processButton: {
-    backgroundColor: '#2196F3',
+    backgroundColor: "#2196F3",
     padding: 15,
     borderRadius: 5,
-    alignItems: 'center',
+    alignItems: "center",
   },
   processButtonText: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
