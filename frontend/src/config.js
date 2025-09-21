@@ -4,6 +4,7 @@
 // iOS シミュレーターの場合
 // export const API_URL = 'http://127.0.0.1:3000/api';
 
+// Railway URLを正しく設定（ポート番号なし）
 export const API_URL = process.env.NODE_ENV === 'production' 
   ? 'https://receipt-app-backend-production.up.railway.app/api'
-  : 'http://192.168.0.33:3000/api'; // MacのIPアドレスに変更
+  : 'https://receipt-app-backend-production.up.railway.app/api'; // Railwayを使用

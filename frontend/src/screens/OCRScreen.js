@@ -11,6 +11,7 @@ import {
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as MediaLibrary from "expo-media-library";
 import TextRecognition, { TextRecognitionScript } from "@react-native-ml-kit/text-recognition";
+import { structureReceiptData } from '../services/chatgpt';
 
 export default function OCRScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -82,12 +83,42 @@ export default function OCRScreen({ navigation }) {
   };
 
   // 認識されたテキストを処理してレシート追加画面へ
-  const processRecognizedText = (text) => {
-    // TODO: ChatGPT API で構造化処理
-    // 今は簡単な処理として、レシート追加画面に遷移
-    navigation.navigate('AddReceipt', {
-      ocrText: text,
-    });
+  const processRecognizedText = async (text) => {
+    try {
+      setIsProcessing(true);
+      
+      // ChatGPT API でレシートテキストを構造化
+      console.log('ChatGPT APIでテキスト構造化を開始...');
+      const structuredData = await structureReceiptData(text);
+      
+      console.log('構造化結果:', structuredData);
+      
+      // 構造化されたデータをAddReceiptScreenに渡す
+      navigation.navigate('AddReceipt', {
+        ocrText: text,
+        structuredData: structuredData,
+        isFromOCR: true
+      });
+      
+    } catch (error) {
+      console.error('テキスト構造化エラー:', error);
+      Alert.alert(
+        'エラー', 
+        'テキストの構造化に失敗しました。手動入力で進みますか？',
+        [
+          { text: 'キャンセル', style: 'cancel' },
+          { 
+            text: '手動入力', 
+            onPress: () => navigation.navigate('AddReceipt', {
+              ocrText: text,
+              isFromOCR: true
+            })
+          }
+        ]
+      );
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
