@@ -1,10 +1,8 @@
 // バックエンドのURL設定
-// export const API_URL = 'http://localhost:3000/api';
+// Railway本番環境用
+export const API_URL = 'https://receipt-app-backend-production.up.railway.app/api';
 
-// iOS シミュレーターの場合
-// export const API_URL = 'http://127.0.0.1:3000/api';
-
-// Railway URLを正しく設定（ポート番号なし）
-export const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://receipt-app-backend-production.up.railway.app/api'
-  : 'https://receipt-app-backend-production.up.railway.app/api'; // Railwayを使用
+// ローカル開発用（IPアドレスは場所によって変わる）
+// 実家: 192.168.0.59
+// 自宅: 192.168.0.33
+// export const API_URL = 'http://192.168.0.59:3000/api';

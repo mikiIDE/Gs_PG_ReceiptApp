@@ -10,7 +10,11 @@ import { API_URL } from '../config';
  */
 export const structureReceiptData = async (ocrText) => {
   try {
-    const response = await fetch(`${API_URL}/receipts/process-ocr`, {
+    const requestUrl = `${API_URL}/receipts/process-ocr`;
+    console.log('🔍 リクエスト送信先:', requestUrl);
+    console.log('🔍 API_URL:', API_URL);
+    
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,6 +23,8 @@ export const structureReceiptData = async (ocrText) => {
         ocrText: ocrText
       }),
     });
+    
+    console.log('📡 レスポンスステータス:', response.status);
 
     if (!response.ok) {
       throw new Error(`Server error: ${response.status} ${response.statusText}`);
