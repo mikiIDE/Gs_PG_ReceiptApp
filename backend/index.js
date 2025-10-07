@@ -3,6 +3,10 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 require('dotenv').config();
 
+// OpenAI APIの設定
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
 // Firebase Admin SDK の初期化
 let serviceAccount;
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -98,6 +102,154 @@ app.get('/api/items/:itemName/best-price', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// OCRテキストをChatGPT APIで構造化処理
+app.post('/api/receipts/process-ocr', async (req, res) => {
+  try {
+    const { ocrText } = req.body;
+
+    if (!ocrText) {
+      return res.status(400).json({ error: 'OCRテキストが必要です' });
+    }
+
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ error: 'OpenAI API key is not configured' });
+    }
+
+    const prompt = `
+以下のレシートのOCR結果から、構造化されたJSONデータを作成してください。
+
+OCRテキスト:
+${ocrText}
+
+以下の形式で正確にJSONのみを返してください（他のテキストは含めないでください）:
+{
+  "store": "店名",
+  "date": "YYYY-MM-DD",
+  "items": [
+    {"name": "推定商品名", "price": 金額}
+  ],
+  "total": 合計金額,
+  "confidence": "high/medium/low"
+}
+
+ルール:
+- 商品名が不明な場合は価格から推定してください（例: ¥169 → "野菜類"）
+- 価格情報は必ず数値で返してください
+- 店名が不明な場合は"不明"としてください
+- 合計金額は認識された最大の金額を使用してください
+- confidenceは認識できた情報量に基づいて判定してください
+`;
+
+    const response = await fetch(OPENAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 500,
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content.trim();
+    
+    try {
+      const structuredData = JSON.parse(content);
+      
+      // 基本的なバリデーション
+      if (!structuredData.store || !structuredData.items || !Array.isArray(structuredData.items)) {
+        throw new Error('Invalid response format from ChatGPT');
+      }
+
+      res.json({
+        success: true,
+        data: structuredData,
+        raw_ocr: ocrText
+      });
+
+    } catch (parseError) {
+      console.error('Failed to parse ChatGPT response:', content);
+      
+      // フォールバック処理
+      const fallbackData = createFallbackStructure(ocrText);
+      res.json({
+        success: true,
+        data: fallbackData,
+        raw_ocr: ocrText,
+        fallback: true
+      });
+    }
+
+  } catch (error) {
+    console.error('ChatGPT API Error:', error);
+    
+    // エラー時のフォールバック
+    const fallbackData = createFallbackStructure(req.body.ocrText);
+    res.json({
+      success: true,
+      data: fallbackData,
+      raw_ocr: req.body.ocrText,
+      fallback: true,
+      error: error.message
+    });
+  }
+});
+
+// フォールバック用のヘルパー関数
+function createFallbackStructure(ocrText) {
+  const lines = ocrText.split('\n');
+  const prices = [];
+  let store = '不明';
+
+  // 価格を抽出
+  lines.forEach(line => {
+    const priceMatches = line.match(/¥(\d{1,3}(?:,\d{3})*)/g);
+    if (priceMatches) {
+      priceMatches.forEach(match => {
+        const price = parseInt(match.replace(/[¥,]/g, ''));
+        if (price > 0 && price < 100000) {
+          prices.push(price);
+        }
+      });
+    }
+  });
+
+  // 店名を推測
+  const firstLine = lines[0]?.trim();
+  if (firstLine && firstLine.length > 0 && firstLine.length < 20) {
+    store = firstLine;
+  }
+
+  // 商品リストを作成
+  const items = prices.slice(0, -1).map((price, index) => ({
+    name: `商品${index + 1}`,
+    price: price
+  }));
+
+  const total = prices.length > 0 ? Math.max(...prices) : 0;
+
+  return {
+    store: store,
+    date: new Date().toISOString().split('T')[0],
+    items: items,
+    total: total,
+    confidence: 'low'
+  };
+}
 
 // テスト用エンドポイント
 app.get('/', (req, res) => {

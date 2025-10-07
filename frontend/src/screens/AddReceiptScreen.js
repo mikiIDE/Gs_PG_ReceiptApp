@@ -1,13 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { receiptAPI } from '../services/api';
 import moment from 'moment';
 
-export default function AddReceiptScreen({ navigation }) {
+export default function AddReceiptScreen({ navigation, route }) {
+  const { structuredData, ocrText, isFromOCR } = route.params || {};
   const [storeName, setStoreName] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [purchaseDate, setPurchaseDate] = useState(moment().format('YYYY-MM-DD'));
   const [items, setItems] = useState([{ name: '', price: '', category: '' }]);
+
+  // OCRデータがある場合、初期値として設定
+  useEffect(() => {
+    if (structuredData) {
+      setStoreName(structuredData.store || '');
+      setTotalAmount(structuredData.total?.toString() || '');
+      setPurchaseDate(structuredData.date || moment().format('YYYY-MM-DD'));
+      
+      if (structuredData.items?.length > 0) {
+        setItems(structuredData.items.map(item => ({
+          name: item.name || '',
+          price: item.price?.toString() || '',
+          category: ''
+        })));
+      }
+      
+      // OCRから来た場合の通知
+      if (isFromOCR) {
+        const confidence = structuredData.confidence || 'unknown';
+        const isFallback = structuredData.isFallback;
+        
+        let message = '';
+        if (isFallback) {
+          message = 'ChatGPT APIでの処理に失敗したため、基本的な情報のみを抽出しました。内容を確認してください。';
+        } else {
+          message = `ChatGPT APIで構造化しました（信頼度: ${confidence}）。内容を確認してください。`;
+        }
+        
+        Alert.alert('OCR結果', message);
+      }
+    }
+  }, [structuredData, isFromOCR]);
 
   const addItem = () => {
     setItems([...items, { name: '', price: '', category: '' }]);
