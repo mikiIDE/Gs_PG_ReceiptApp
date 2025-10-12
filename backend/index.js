@@ -69,6 +69,41 @@ app.post('/api/receipts', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// レシートデータの更新
+app.put('/api/receipts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { storeName, totalAmount, purchaseDate, items } = req.body;
+    
+    const receipt = {
+      storeName,
+      totalAmount: Number(totalAmount),
+      purchaseDate,
+      items: items.map(item => ({
+        name: item.name,
+        price: Number(item.price),
+        category: item.category || '未分類'
+      })),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    
+    await db.collection('receipts').doc(id).update(receipt);
+    res.json({ success: true, id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// レシートデータの削除
+app.delete('/api/receipts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.collection('receipts').doc(id).delete();
+    res.json({ success: true, id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // 商品の最安値比較
 app.get('/api/items/:itemName/best-price', async (req, res) => {

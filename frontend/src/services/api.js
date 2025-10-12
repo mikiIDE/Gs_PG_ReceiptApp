@@ -12,5 +12,17 @@ export const receiptAPI = {
   addReceipt: async (receiptData) => {
     const response = await axios.post(`${API_URL}/receipts`, receiptData);
     return response.data;
+  },
+  
+  // レシート更新
+  updateReceipt: async (id, receiptData) => {
+    const response = await axios.put(`${API_URL}/receipts/${id}`, receiptData);
+    return response.data;
+  },
+  
+  // レシート削除
+  deleteReceipt: async (id) => {
+    const response = await axios.delete(`${API_URL}/receipts/${id}`);
+    return response.data;
   }
 };
