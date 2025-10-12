@@ -56,6 +56,7 @@ export default function HomeScreen({ navigation }) {
         data={receipts}
         renderItem={renderReceipt}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -83,6 +84,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
+  },
+  listContent: {
+    paddingBottom: 160,
   },
   receiptCard: {
     backgroundColor: "white",
@@ -120,7 +124,7 @@ const styles = StyleSheet.create({
   addButton: {
     position: "absolute",
     right: 20,
-    bottom: 20,
+    bottom: 40,
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
   ocrButton: {
     position: "absolute",
     right: 20,
-    bottom: 90,
+    bottom: 110,
     width: 60,
     height: 60,
     borderRadius: 30,
