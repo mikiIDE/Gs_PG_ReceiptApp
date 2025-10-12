@@ -38,13 +38,16 @@ export default function HomeScreen({ navigation }) {
   };
 
   const renderReceipt = ({ item }) => (
-    <View style={styles.receiptCard}>
+    <TouchableOpacity 
+      style={styles.receiptCard}
+      onPress={() => navigation.navigate('ReceiptDetail', { receiptId: item.id })}
+    >
       <Text style={styles.storeName}>{item.storeName}</Text>
       <Text style={styles.date}>
         {moment(item.purchaseDate).format("YYYY/MM/DD")}
       </Text>
       <Text style={styles.amount}>¥{item.totalAmount?.toLocaleString()}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
